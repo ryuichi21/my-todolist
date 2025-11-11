@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日付管理付きTo-Doリスト</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 32px;
+        }
+
+        .todo-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .tab:hover {
+            color: #667eea;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .input-section {
+            margin-bottom: 25px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        #todoInput {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        #todoInput:focus, #deadlineInput:focus, #dateInput:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        #deadlineInput, #dateInput {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            flex: 1;
+        }
+
+        #addBtn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #addBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .view-btn {
+            flex: 1;
+            padding: 10px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+
+        .view-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .view-btn.active {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .date-group {
+            margin-bottom: 25px;
+        }
+
+        .date-header {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .date-badge {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        .date-badge.today {
+            background: #4caf50;
+        }
+
+        .date-badge.overdue {
+            background: #e74c3c;
+        }
+
+        #todoList {
+            list-style: none;
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .todo-item:hover {
+            background: #f0f0f0;
+            transform: translateX(5px);
+        }
+
+        .todo-item.completed {
+            opacity: 0.6;
+        }
+
+        .todo-item.completed .todo-text {
+            text-decoration: line-through;
+            color: #999;
+        }
+
+        .todo-item.urgent {
+            border-left: 4px solid #e74c3c;
+            background: #ffebee;
+        }
+
+        .todo-item.warning {
+            border-left: 4px solid #ff9800;
+            background: #fff3e0;
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 15px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+
+        .todo-content {
+            flex: 1;
+        }
+
+        .todo-text {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .todo-deadline {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .deadline-label {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+
+        .deadline-label.urgent {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .deadline-label.warning {
+            background: #ff9800;
+            color: white;
+        }
+
+        .deadline-label.normal {
+            background: #4caf50;
+            color: white;
+        }
+
+        .delete-btn {
+            padding: 8px 15px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .delete-btn:hover {
+            background-color: #c0392b;
+            transform: scale(1.05);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 15px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 300px;
+            z-index: 1000;
+            animation: slideInRight 0.3s ease;
+            border-left: 4px solid #e74c3c;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .notification-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #e74c3c;
+            margin-bottom: 10px;
+        }
+
+        .notification-text {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .close-notification {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #999;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📅 日付管理To-Do</h1>
+        
+        <div class="todo-container">
+            <!-- 表示切替タブ -->
+            <div class="tabs">
+                <button class="tab active" data-view="all">すべて</button>
+                <button class="tab" data-view="today">今日</button>
+                <button class="tab" data-view="tomorrow">明日</button>
+                <button class="tab" data-view="week">今週</button>
+                <button class="tab" data-view="overdue">期限切れ</button>
+            </div>
+
+            <!-- 入力エリア -->
+            <div class="input-section">
+                <div class="input-row">
+                    <input 
+                        type="text" 
+                        id="todoInput" 
+                        placeholder="新しいタスクを入力..."
+                        autocomplete="off"
+                    >
+                </div>
+                <div class="input-row">
+                    <input 
+                        type="date" 
+                        id="dateInput"
+                        placeholder="実施日"
+                    >
+                    <input 
+                        type="datetime-local" 
+                        id="deadlineInput"
+                        placeholder="提出期限"
+                    >
+                    <button id="addBtn">追加</button>
+                </div>
+            </div>
+
+            <!-- 表示モード切替 -->
+            <div class="view-toggle">
+                <button class="view-btn" data-mode="date">📅 日付ごと</button>
+                <button class="view-btn active" data-mode="deadline">⏰ 期限順</button>
+                <button class="view-btn" data-mode="priority">🔥 緊急度順</button>
+            </div>
+
+            <!-- 統計情報 -->
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-number" id="totalCount">0</div>
+                    <div class="stat-label">全タスク</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="todayCount">0</div>
+                    <div class="stat-label">今日</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="urgentCount">0</div>
+                    <div class="stat-label">緊急</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="activeCount">0</div>
+                    <div class="stat-label">未完了</div>
+                </div>
+            </div>
+
+            <!-- To-Doリスト -->
+            <div id="todoList">
+                <div class="empty-state">
+                    <div class="empty-state-icon">✨</div>
+                    <p>タスクを追加してみましょう！</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let todos = [];
+        let currentView = 'all';
+        let currentMode = 'deadline';
+
+        const todoInput = document.getElementById('todoInput');
+        const dateInput = document.getElementById('dateInput');
+        const deadlineInput = document.getElementById('deadlineInput');
+        const addBtn = document.getElementById('addBtn');
+        const todoList = document.getElementById('todoList');
+        const tabs = document.querySelectorAll('.tab');
+        const viewBtns = document.querySelectorAll('.view-btn');
+
+        // 今日の日付を設定
+        const today = new Date();
+        dateInput.valueAsDate = today;
+
+        // ローカルストレージから読み込み
+        function loadTodos() {
+            const saved = localStorage.getItem('dateTodos');
+            if (saved) {
+                todos = JSON.parse(saved);
+                checkDeadlines();
+                renderTodos();
+            }
+        }
+
+        // ローカルストレージに保存
+        function saveTodos() {
+            localStorage.setItem('dateTodos', JSON.stringify(todos));
+        }
+
+        // タスクを追加
+        function addTodo() {
+            const text = todoInput.value.trim();
+            const date = dateInput.value;
+            const deadline = deadlineInput.value;
+            
+            if (text === '') {
+                alert('タスクを入力してください！');
+                return;
+            }
+
+            if (date === '') {
+                alert('実施日を入力してください！');
+                return;
+            }
+
+            const todo = {
+                id: Date.now(),
+                text: text,
+                date: date,
+                deadline: deadline || null,
+                completed: false,
+                createdAt: Date.now()
+            };
+
+            todos.push(todo);
+            todoInput.value = '';
+            deadlineInput.value = '';
+            saveTodos();
+            renderTodos();
+        }
+
+        // タスクを削除
+        function deleteTodo(id) {
+            todos = todos.filter(todo => todo.id !== id);
+            saveTodos();
+            renderTodos();
+        }
+
+        // 完了状態を切り替え
+        function toggleTodo(id) {
+            const todo = todos.find(todo => todo.id === id);
+            if (todo) {
+                todo.completed = !todo.completed;
+                saveTodos();
+                renderTodos();
+            }
+        }
+
+        // 日付のフォーマット
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            const dateOnly = date.toDateString();
+            const todayOnly = today.toDateString();
+            const tomorrowOnly = tomorrow.toDateString();
+
+            if (dateOnly === todayOnly) return '今日';
+            if (dateOnly === tomorrowOnly) return '明日';
+
+            return `${date.getMonth() + 1}月${date.getDate()}日(${['日', '月', '火', '水', '木', '金', '土'][date.getDay()]})`;
+        }
+
+        // 期限までの残り時間を計算
+        function getTimeUntilDeadline(deadline) {
+            if (!deadline) return null;
+            const now = new Date().getTime();
+            const deadlineTime = new Date(deadline).getTime();
+            const diff = deadlineTime - now;
+            
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const days = Math.floor(hours / 24);
+            
+            return { hours, days, diff };
+        }
+
+        // 緊急度を判定
+        function getUrgency(deadline) {
+            if (!deadline) return 'none';
+            const { hours } = getTimeUntilDeadline(deadline);
+            
+            if (hours < 0) return 'expired';
+            if (hours <= 24) return 'urgent';
+            if (hours <= 72) return 'warning';
+            return 'normal';
+        }
+
+        // 期限表示のテキスト
+        function getDeadlineText(deadline) {
+            if (!deadline) return '';
+            const { hours, days, diff } = getTimeUntilDeadline(deadline);
+            
+            if (diff < 0) return '期限切れ';
+            if (hours < 1) return `残り${Math.floor(diff / (1000 * 60))}分`;
+            if (hours < 24) return `残り${hours}時間`;
+            return `残り${days}日`;
+        }
+
+        // フィルター処理
+        function filterTodos() {
+            const now = new Date();
+            now.setHours(0, 0, 0, 0);
+            const today = now.getTime();
+            const tomorrow = today + 86400000;
+            const weekEnd = today + 86400000 * 7;
+
+            return todos.filter(todo => {
+                const todoDate = new Date(todo.date).setHours(0, 0, 0, 0);
+                
+                if (currentView === 'all') return true;
+                if (currentView === 'today') return todoDate === today;
+                if (currentView === 'tomorrow') return todoDate === tomorrow;
+                if (currentView === 'week') return todoDate >= today && todoDate < weekEnd;
+                if (currentView === 'overdue') {
+                    if (todo.deadline) {
+                        return getUrgency(todo.deadline) === 'expired';
+                    }
+                    return todoDate < today && !todo.completed;
+                }
+                return true;
+            });
+        }
+
+        // 日付でグループ化
+        function groupByDate(todos) {
+            const groups = {};
+            todos.forEach(todo => {
+                const date = todo.date;
+                if (!groups[date]) {
+                    groups[date] = [];
+                }
+                groups[date].push(todo);
+            });
+            return groups;
+        }
+
+        // 並び替え
+        function sortTodos(todos) {
+            if (currentMode === 'deadline') {
+                return todos.sort((a, b) => {
+                    if (!a.deadline && !b.deadline) return 0;
+                    if (!a.deadline) return 1;
+                    if (!b.deadline) return -1;
+                    return new Date(a.deadline) - new Date(b.deadline);
+                });
+            } else if (currentMode === 'priority') {
+                const urgencyOrder = { 'expired': 0, 'urgent': 1, 'warning': 2, 'normal': 3, 'none': 4 };
+                return todos.sort((a, b) => {
+                    const urgencyA = getUrgency(a.deadline);
+                    const urgencyB = getUrgency(b.deadline);
+                    return urgencyOrder[urgencyA] - urgencyOrder[urgencyB];
+                });
+            }
+            return todos;
+        }
+
+        // 期限チェックと通知
+        function checkDeadlines() {
+            const now = Date.now();
+            const lastCheck = localStorage.getItem('lastCheck') || 0;
+            
+            if (now - lastCheck < 3600000) return;
+            
+            todos.forEach(todo => {
+                if (todo.completed || !todo.deadline) return;
+                const { hours } = getTimeUntilDeadline(todo.deadline);
+                if (hours <= 24 && hours > 0) {
+                    showNotification(todo);
+                }
+            });
+            
+            localStorage.setItem('lastCheck', now);
+        }
+
+        // 通知を表示
+        function showNotification(todo) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.innerHTML = `
+                <button class="close-notification" onclick="this.parentElement.remove()">×</button>
+                <div class="notification-title">⏰ 提出期限が近づいています</div>
+                <div class="notification-text">
+                    <strong>${todo.text}</strong><br>
+                    ${getDeadlineText(todo.deadline)}
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 5000);
+        }
+
+        // レンダリング
+        function renderTodos() {
+            const filtered = filterTodos();
+            
+            // 統計更新
+            document.getElementById('totalCount').textContent = todos.length;
+            const todayDate = new Date().setHours(0, 0, 0, 0);
+            document.getElementById('todayCount').textContent = todos.filter(t => new Date(t.date).setHours(0, 0, 0, 0) === todayDate).length;
+            document.getElementById('urgentCount').textContent = todos.filter(t => !t.completed && getUrgency(t.deadline) === 'urgent').length;
+            document.getElementById('activeCount').textContent = todos.filter(t => !t.completed).length;
+
+            if (filtered.length === 0) {
+                todoList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">✨</div>
+                        <p>該当するタスクはありません</p>
+                    </div>
+                `;
+                return;
+            }
+
+            if (currentMode === 'date') {
+                // 日付ごとに表示
+                const groups = groupByDate(filtered);
+                const sortedDates = Object.keys(groups).sort();
+                
+                todoList.innerHTML = sortedDates.map(date => {
+                    const dateTodos = sortTodos(groups[date]);
+                    const dateObj = new Date(date);
+                    const today = new Date().setHours(0, 0, 0, 0);
+                    const todoDate = dateObj.setHours(0, 0, 0, 0);
+                    
+                    let badgeClass = '';
+                    let badgeText = formatDate(date);
+                    
+                    if (todoDate === today) {
+                        badgeClass = 'today';
+                    } else if (todoDate < today) {
+                        badgeClass = 'overdue';
+                    }
+                    
+                    return `
+                        <div class="date-group">
+                            <div class="date-header">
+                                <span class="date-badge ${badgeClass}">${badgeText}</span>
+                                <span style="color: #999; font-size: 14px;">${dateTodos.length}件</span>
+                            </div>
+                            ${renderTodoItems(dateTodos)}
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                // 一覧表示
+                todoList.innerHTML = renderTodoItems(sortTodos(filtered));
+            }
+        }
+
+        // To-Doアイテムのレンダリング
+        function renderTodoItems(todos) {
+            return todos.map(todo => {
+                const urgency = getUrgency(todo.deadline);
+                const urgencyClass = urgency === 'urgent' || urgency === 'expired' ? 'urgent' : 
+                                   urgency === 'warning' ? 'warning' : '';
+                
+                let deadlineHtml = '';
+                if (todo.deadline) {
+                    const labelClass = urgency === 'urgent' || urgency === 'expired' ? 'urgent' : 
+                                      urgency === 'warning' ? 'warning' : 'normal';
+                    const deadlineDate = new Date(todo.deadline);
+                    const formattedDeadline = `${deadlineDate.getMonth() + 1}/${deadlineDate.getDate()} ${deadlineDate.getHours()}:${String(deadlineDate.getMinutes()).padStart(2, '0')}`;
+                    
+                    deadlineHtml = `
+                        <div class="todo-deadline">
+                            <span class="deadline-label ${labelClass}">${getDeadlineText(todo.deadline)}</span>
+                            期限: ${formattedDeadline}
+                        </div>
+                    `;
+                }
+                
+                return `
+                    <div class="todo-item ${todo.completed ? 'completed' : ''} ${urgencyClass}">
+                        <input 
+                            type="checkbox" 
+                            ${todo.completed ? 'checked' : ''}
+                            onchange="toggleTodo(${todo.id})"
+                        >
+                        <div class="todo-content">
+                            <div class="todo-text">${todo.text}</div>
+                            ${currentMode !== 'date' ? `<div class="todo-deadline" style="margin-bottom: 3px;">📅 ${formatDate(todo.date)}</div>` : ''}
+                            ${deadlineHtml}
+                        </div>
+                        <button class="delete-btn" onclick="deleteTodo(${todo.id})">削除</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // イベントリスナー
+        addBtn.addEventListener('click', addTodo);
+        todoInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addTodo();
+        });
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentView = tab.dataset.view;
+                renderTodos();
+            });
+        });
+
+        viewBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                viewBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentMode = btn.dataset.mode;
+                renderTodos();
+            });
+        });
+
+        setInterval(() => {
+            renderTodos();
+            checkDeadlines();
+        }, 60000);
+
+        loadTodos();
+    </script>
+</body>
+</html>　　　　　　　　　
